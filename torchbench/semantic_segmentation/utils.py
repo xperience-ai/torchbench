@@ -138,9 +138,10 @@ def evaluate_segmentation(
     test_loader,
     model_output_transform,
     send_data_to_device,
+    num_classes,
     device="cuda",
 ):
-    confmat = ConfusionMatrix(test_loader.no_classes)
+    confmat = ConfusionMatrix(num_classes)
 
     iterator = tqdm.tqdm(test_loader, desc="Evaluation", mininterval=5)
 
@@ -172,15 +173,15 @@ def evaluate_segmentation(
                     )
 
                     speed_mem_metrics = {
-                        'Tasks / Evaluation Time': None,
-                        'Evaluation Time': None,
-                        'Tasks': None,
-                        'Max Memory Allocated (Total)': None,
+                        "Tasks / Evaluation Time": None,
+                        "Evaluation Time": None,
+                        "Tasks": None,
+                        "Max Memory Allocated (Total)": None,
                     }
 
                     return cached_res, speed_mem_metrics, run_hash
 
-    exec_time = (time.time() - init_time)
+    exec_time = time.time() - init_time
 
     acc_global, acc, iu = confmat.compute()
 
@@ -188,13 +189,15 @@ def evaluate_segmentation(
     torch.cuda.reset_max_memory_allocated(device=device)
 
     speed_mem_metrics = {
-        'Tasks / Evaluation Time': len(test_loader.dataset) / exec_time,
-        'Tasks': len(test_loader.dataset),
-        'Evaluation Time': (time.time() - init_time),
-        'Max Memory Allocated (Total)': memory_allocated,
+        "Tasks / Evaluation Time": len(test_loader.dataset) / exec_time,
+        "Tasks": len(test_loader.dataset),
+        "Evaluation Time": (time.time() - init_time),
+        "Max Memory Allocated (Total)": memory_allocated,
     }
 
-    return {
-        "Accuracy": acc_global.item(),
-        "Mean IOU": iu.mean().item()}, \
-           speed_mem_metrics, run_hash
+    return (
+        {"Accuracy": acc_global.item(), "Mean IOU": iu.mean().item()},
+        speed_mem_metrics,
+        run_hash,
+    )
+
